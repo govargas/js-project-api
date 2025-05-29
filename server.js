@@ -1,22 +1,47 @@
-import cors from "cors"
-import express from "express"
+import express from 'express'
+import cors from 'cors'
+import listEndpoints from 'express-list-endpoints'
+import dotenv from 'dotenv'
 
-// Defines the port the app will run on. Defaults to 8080, but can be overridden
-// when starting the server. Example command to overwrite PORT env variable value:
-// PORT=9000 npm start
-const port = process.env.PORT || 8080
+import thoughts from './data/thoughts.json'
+
+dotenv.config()
+
 const app = express()
+const PORT = process.env.PORT || 8080
 
-// Add middlewares to enable cors and json body parsing
+// Enable CORS and JSON body parsing
 app.use(cors())
 app.use(express.json())
 
-// Start defining your routes here
-app.get("/", (req, res) => {
-  res.send("Hello Technigo!")
+// 1) API documentation & welcome message
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to the Happy Thoughts API',
+    endpoints: listEndpoints(app)
+  })
+})
+
+// 2) Collection endpoint: get all thoughts
+app.get('/thoughts', (req, res) => {
+  res.status(200).json(thoughts)
+})
+
+// 3) Single-item endpoint: get one thought by ID
+app.get('/thoughts/:id', (req, res) => {
+  const { id } = req.params
+  const found = thoughts.find((t) => t._id === id)
+
+  if (!found) {
+    return res
+      .status(404)
+      .json({ error: `Thought with ID '${id}' not found` })
+  }
+
+  res.status(200).json(found)
 })
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`)
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
 })
