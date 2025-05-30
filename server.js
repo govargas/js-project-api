@@ -22,9 +22,17 @@ app.get('/', (req, res) => {
   })
 })
 
-// 2) Collection endpoint: get all thoughts
+// 2) Collection endpoint: get all thoughts with optional filter by hearts
 app.get('/thoughts', (req, res) => {
-  res.status(200).json(thoughts)
+  const { hearts } = req.query
+  let results = thoughts
+
+  if (hearts) { // Filter by hearts if query parameter is provided
+    const h = Number(hearts) // Convert to number
+    results = results.filter((t) => t.hearts === h) // Filter thoughts by hearts count
+  }
+
+  res.status(200).json(results) // Return the filtered or unfiltered thoughts
 })
 
 // 3) Single-item endpoint: get one thought by ID
