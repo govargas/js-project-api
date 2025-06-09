@@ -11,11 +11,9 @@ const app = express()
 const PORT = process.env.PORT || 8080
 
 // Connect to MongoDB
+const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017/happythoughts'
 mongoose
-  .connect(process.env.MONGO_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
+  .connect(mongoUrl)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch((err) => console.error('❌ MongoDB connection error:', err))
 
@@ -53,6 +51,52 @@ app.get('/thoughts/:id', async (req, res, next) => {
         .json({ error: `Thought with ID '${req.params.id}' not found` })
     }
     res.status(200).json(thought)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 4) Create a new thought
+app.post('/thoughts', async (req, res, next) => {
+  try {
+    const { message } = req.body
+    const newThought = new Thought({ message })
+    const savedThought = await newThought.save()
+    res.status(201).json(savedThought)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 5) Update a thought (edit message or hearts)
+app.put('/thoughts/:id', async (req, res, next) => {
+  try {
+    const updated = await Thought.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    )
+    if (!updated) {
+      return res
+        .status(404)
+        .json({ error: `Thought with ID '${req.params.id}' not found` })
+    }
+    res.json(updated)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 6) Delete a thought
+app.delete('/thoughts/:id', async (req, res, next) => {
+  try {
+    const deleted = await Thought.findByIdAndDelete(req.params.id)
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ error: `Thought with ID '${req.params.id}' not found` })
+    }
+    res.json({ success: true, deletedId: req.params.id })
   } catch (err) {
     next(err)
   }
